@@ -1,0 +1,9 @@
+{
+  "name": "doctor-appointment-system",
+  "version": "1.0.0",
+  "description": "Doctor Appointment Booking System",
+  "scripts": {
+    "start": "cd server && npm install && npm start",
+    "build": "cd server && npm install"
+  }
+}

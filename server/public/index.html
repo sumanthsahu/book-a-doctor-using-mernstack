@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Doctor Appointment System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #0d6efd, #0099ff);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #0d6efd, #0099ff);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0099ff, #0d6efd);
+        }
+        .form-control {
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.25);
+        }
+        .alert {
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .doctor-card {
+            cursor: pointer;
+        }
+        .doctor-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+        }
+        .time-slot {
+            cursor: pointer;
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        .time-slot.selected {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .appointment-card {
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+        }
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-hospital-user me-2"></i>
+                Doctor Appointment System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item" id="loginNav">
+                        <a class="nav-link" href="#" onclick="showSection('auth')">Login/Register</a>
+                    </li>
+                    <li class="nav-item" id="appointmentsNav" style="display: none;">
+                        <a class="nav-link" href="#" onclick="showSection('appointments')">My Appointments</a>
+                    </li>
+                    <li class="nav-item" id="logoutNav" style="display: none;">
+                        <a class="nav-link" href="#" onclick="logout()">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="auth" class="section">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <ul class="nav nav-tabs mb-4">
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="#" onclick="toggleAuthForm('login')">Login</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#" onclick="toggleAuthForm('register')">Register</a>
+                                </li>
+                            </ul>
+
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="loginEmail" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="loginPassword" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Login</button>
+                            </form>
+
+                            <form id="registerForm" style="display: none;">
+                                <div class="mb-3">
+                                    <label class="form-label">Name</label>
+                                    <input type="text" class="form-control" id="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Role</label>
+                                    <select class="form-control" id="role" required>
+                                        <option value="patient">Patient</option>
+                                        <option value="doctor">Doctor</option>
+                                    </select>
+                                </div>
+                                <div id="doctorFields" style="display: none;">
+                                    <div class="mb-3">
+                                        <label class="form-label">Specialization</label>
+                                        <input type="text" class="form-control" id="specialization">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Experience (years)</label>
+                                        <input type="number" class="form-control" id="experience">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Register</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="appointments" class="section" style="display: none;">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title mb-4">Available Doctors</h4>
+                            <div class="row" id="doctorsList"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card appointment-card">
+                        <div class="card-body">
+                            <h4 class="card-title mb-4">Book Appointment</h4>
+                            <form id="appointmentForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Selected Doctor</label>
+                                    <input type="text" class="form-control" id="selectedDoctor" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Date</label>
+                                    <input type="date" class="form-control" id="appointmentDate" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Available Time Slots</label>
+                                    <div id="timeSlots" class="d-flex flex-wrap"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Symptoms</label>
+                                    <textarea class="form-control" id="symptoms" rows="3" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Book Appointment</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title mb-4">My Appointments</h4>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Time</th>
+                                            <th>Doctor</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="appointmentsList"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const BASE_URL = 'http://localhost:5001/api';
+        let token = localStorage.getItem('token');
+        let currentUser = null;
+        let selectedDoctorId = null;
+        let selectedTimeSlot = null;
+
+        // Show loading spinner
+        function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
+        }
+
+        // Hide loading spinner
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Initialize the app
+        function init() {
+            if (token) {
+                showSection('appointments');
+                document.getElementById('loginNav').style.display = 'none';
+                document.getElementById('appointmentsNav').style.display = 'block';
+                document.getElementById('logoutNav').style.display = 'block';
+                loadDoctors();
+                loadAppointments();
+            } else {
+                showSection('auth');
+            }
+
+            // Set min date to today for appointment booking
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('appointmentDate').min = today;
+            document.getElementById('appointmentDate').value = today;
+        }
+
+        // Show/hide sections
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+            document.getElementById(sectionId).style.display = 'block';
+        }
+
+        // Toggle between login and register forms
+        function toggleAuthForm(form) {
+            document.getElementById('loginForm').style.display = form === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = form === 'register' ? 'block' : 'none';
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // API request helper
+        async function makeRequest(endpoint, method = 'GET', data = null) {
+            showLoading();
+            try {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const options = {
+                    method,
+                    headers
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${BASE_URL}${endpoint}`, options);
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || 'Request failed');
+                }
+
+                return result;
+            } catch (error) {
+                throw error;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Load doctors list
+        async function loadDoctors() {
+            try {
+                const doctors = await makeRequest('/auth/doctors');
+                const doctorsList = document.getElementById('doctorsList');
+                doctorsList.innerHTML = doctors.map(doctor => `
+                    <div class="col-md-6 mb-4">
+                        <div class="card doctor-card h-100" onclick="selectDoctor('${doctor._id}', '${doctor.name}')">
+                            <div class="card-body text-center">
+                                <img src="https://via.placeholder.com/100" alt="${doctor.name}" class="mb-3">
+                                <h5 class="card-title">${doctor.name}</h5>
+                                <p class="card-text">
+                                    <strong>Specialization:</strong> ${doctor.specialization}<br>
+                                    <strong>Experience:</strong> ${doctor.experience} years
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading doctors:', error);
+                alert('Failed to load doctors list');
+            }
+        }
+
+        // Select a doctor
+        function selectDoctor(doctorId, doctorName) {
+            selectedDoctorId = doctorId;
+            document.getElementById('selectedDoctor').value = doctorName;
+            document.querySelectorAll('.doctor-card').forEach(card => {
+                card.classList.remove('border-primary');
+            });
+            event.currentTarget.classList.add('border-primary');
+            loadTimeSlots();
+        }
+
+        // Load available time slots
+        async function loadTimeSlots() {
+            if (!selectedDoctorId) return;
+
+            try {
+                const date = document.getElementById('appointmentDate').value;
+                const slots = await makeRequest(`/auth/doctors/${selectedDoctorId}/time-slots`);
+                const timeSlotsDiv = document.getElementById('timeSlots');
+                timeSlotsDiv.innerHTML = slots[date].map(slot => `
+                    <div class="time-slot" onclick="selectTimeSlot('${slot}')">
+                        ${slot}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading time slots:', error);
+                alert('Failed to load available time slots');
+            }
+        }
+
+        // Select a time slot
+        function selectTimeSlot(slot) {
+            selectedTimeSlot = slot;
+            document.querySelectorAll('.time-slot').forEach(el => {
+                el.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+        }
+
+        // Load appointments
+        async function loadAppointments() {
+            try {
+                const appointments = await makeRequest('/appointments');
+                const appointmentsList = document.getElementById('appointmentsList');
+                appointmentsList.innerHTML = appointments.map(app => `
+                    <tr>
+                        <td>${new Date(app.date).toLocaleDateString()}</td>
+                        <td>${app.timeSlot}</td>
+                        <td>${app.doctor.name}</td>
+                        <td><span class="badge bg-${app.status === 'confirmed' ? 'success' : 'warning'}">${app.status}</span></td>
+                        <td>
+                            ${app.status === 'pending' ? `
+                                <button class="btn btn-sm btn-danger" onclick="cancelAppointment('${app._id}')">
+                                    Cancel
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading appointments:', error);
+                alert('Failed to load appointments');
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const result = await makeRequest('/auth/login', 'POST', {
+                    email: document.getElementById('loginEmail').value,
+                    password: document.getElementById('loginPassword').value
+                });
+                token = result.token;
+                localStorage.setItem('token', token);
+                init();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const data = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value,
+                    role: document.getElementById('role').value
+                };
+
+                if (data.role === 'doctor') {
+                    data.specialization = document.getElementById('specialization').value;
+                    data.experience = parseInt(document.getElementById('experience').value);
+                }
+
+                await makeRequest('/auth/register', 'POST', data);
+                alert('Registration successful! Please login.');
+                toggleAuthForm('login');
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!selectedDoctorId || !selectedTimeSlot) {
+                alert('Please select a doctor and time slot');
+                return;
+            }
+
+            try {
+                await makeRequest('/appointments', 'POST', {
+                    doctorId: selectedDoctorId,
+                    date: document.getElementById('appointmentDate').value,
+                    timeSlot: selectedTimeSlot,
+                    symptoms: document.getElementById('symptoms').value
+                });
+                alert('Appointment booked successfully!');
+                loadAppointments();
+                e.target.reset();
+                selectedDoctorId = null;
+                selectedTimeSlot = null;
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        document.getElementById('role').addEventListener('change', function(e) {
+            document.getElementById('doctorFields').style.display = 
+                e.target.value === 'doctor' ? 'block' : 'none';
+        });
+
+        document.getElementById('appointmentDate').addEventListener('change', loadTimeSlots);
+
+        function logout() {
+            localStorage.removeItem('token');
+            token = null;
+            currentUser = null;
+            init();
+        }
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
